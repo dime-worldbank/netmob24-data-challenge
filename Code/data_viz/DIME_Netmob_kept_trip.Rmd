@@ -1,0 +1,289 @@
+```{r}
+# library
+library(tidyverse)
+library(viridis)
+library(dplyr)
+library(ggplot2)
+```
+
+ref:https://r-graph-gallery.com/299-circular-stacked-barplot.html
+
+```{r}
+# Create dataset
+data <- data.frame(
+  individual=paste( "Mister ", seq(1,60), sep=""),
+  group=factor(c( rep('A', 10), rep('B', 30), rep('C', 14), rep('D', 6))) ,
+  value1=sample( seq(10,100), 60, replace=T),
+  value2=sample( seq(10,100), 60, replace=T),
+  value3=sample( seq(10,100), 60, replace=T)
+)
+ 
+# Transform data in a tidy format (long format)
+data <- data %>% gather(key = "observation", value="value", -c(1,2))
+```
+
+
+```{r}
+# Set a number of 'empty bar' to add at the end of each group
+empty_bar <- 2
+nObsType <- nlevels(as.factor(data$observation))
+to_add <- data.frame( matrix(NA, empty_bar*nlevels(data$group)*nObsType, ncol(data)) )
+colnames(to_add) <- colnames(data)
+to_add$group <- rep(levels(data$group), each=empty_bar*nObsType )
+data <- rbind(data, to_add)
+data <- data %>% arrange(group, individual)
+data$id <- rep( seq(1, nrow(data)/nObsType) , each=nObsType)
+ 
+# Get the name and the y position of each label
+label_data <- data %>% group_by(id, individual) %>% summarize(tot=sum(value))
+number_of_bar <- nrow(label_data)
+angle <- 90 - 360 * (label_data$id-0.5) /number_of_bar     # I substract 0.5 because the letter must have the angle of the center of the bars. Not extreme right(1) or extreme left (0)
+label_data$hjust <- ifelse( angle < -90, 1, 0)
+label_data$angle <- ifelse(angle < -90, angle+180, angle)
+ 
+# prepare a data frame for base lines
+base_data <- data %>% 
+  group_by(group) %>% 
+  summarize(start=min(id), end=max(id) - empty_bar) %>% 
+  rowwise() %>% 
+  mutate(title=mean(c(start, end)))
+```
+
+
+```{r}
+# prepare a data frame for grid (scales)
+grid_data <- base_data
+grid_data$end <- grid_data$end[ c( nrow(grid_data), 1:nrow(grid_data)-1)] + 1
+grid_data$start <- grid_data$start - 1
+grid_data <- grid_data[-1,]
+```
+
+
+```{r}
+# Make the plot
+p <- ggplot(data) +      
+  
+  # Add the stacked bar
+  geom_bar(aes(x=as.factor(id), y=value, fill=observation), stat="identity", alpha=0.5) +
+  scale_fill_viridis(discrete=TRUE) +
+  
+  # Add a val=100/75/50/25 lines. I do it at the beginning to make sur barplots are OVER it.
+  geom_segment(data=grid_data, aes(x = end, y = 0, xend = start, yend = 0), colour = "grey", alpha=1, linewidth=0.3 , inherit.aes = FALSE ) +
+  geom_segment(data=grid_data, aes(x = end, y = 50, xend = start, yend = 50), colour = "grey", alpha=1, linewidth=0.3 , inherit.aes = FALSE ) +
+  geom_segment(data=grid_data, aes(x = end, y = 100, xend = start, yend = 100), colour = "grey", alpha=1, linewidth=0.3 , inherit.aes = FALSE ) +
+  geom_segment(data=grid_data, aes(x = end, y = 150, xend = start, yend = 150), colour = "grey", alpha=1, linewidth=0.3 , inherit.aes = FALSE ) +
+  geom_segment(data=grid_data, aes(x = end, y = 200, xend = start, yend = 200), colour = "grey", alpha=1, linewidth=0.3 , inherit.aes = FALSE ) +
+  
+  # Add text showing the value of each 100/75/50/25 lines
+  ggplot2::annotate("text", x = rep(max(data$id),5), y = c(0, 50, 100, 150, 200), label = c("0", "50", "100", "150", "200") , color="grey", size=6 , angle=0, fontface="bold", hjust=1) +
+  
+  ylim(-150,max(label_data$tot, na.rm=T)) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm") 
+  ) +
+  coord_polar() +
+  
+  # Add labels on top of each bar
+  geom_text(data=label_data, aes(x=id, y=tot+10, label=individual, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=5, angle= label_data$angle, inherit.aes = FALSE ) +
+  # Add base line information
+  geom_segment(data=base_data, aes(x = start, y = -5, xend = end, yend = -5), colour = "black", alpha=0.8, size=0.6 , inherit.aes = FALSE )  +
+  geom_text(data=base_data, aes(x = title, y = -18, label=group), hjust=c(1,1,0,0), colour = "black", alpha=0.8, size=4, fontface="bold", inherit.aes = FALSE)
+
+
+# Save at png
+# ggsave(p, file="output.png", width=10, height=10)
+p
+```
+
+
+```{r}
+```
+
+
+ref: https://r-graph-gallery.com/297-circular-barplot-with-groups.html
+
+```{r}
+col_pal_rb = c("#e66351","#ee8b47", "#f6ab58","#fed070","#fce8b6","#abdce0","#74bcd4","#528fab","#386793","#1f466d")
+col_pal_rb_s = c("#e66351","#fed070","#74bcd4","#386793")
+
+col_pal_py = c("#11325b","#365180","#726c9c","#b486ab","#f4a773","#fada73")
+col_pal_py_s = c("#365180","#b486ab","#f4a773","#fada73")
+
+names(col_pal_py_s) <- c("CO", "MX", "ID", "IN")
+names(col_pal_rb_s) <- c("CO", "MX", "ID", "IN")
+```
+
+# OD
+```{r}
+# Read and preprocess the data
+my_data <- read.csv('/Users/wenlanzhang/Downloads/DIME/NetMob/Data/count/OD_kept_trip.csv')
+my_data <- my_data[my_data$year == 2019, ]
+# my_data <- my_data[my_data$year == 2020, ]
+my_data$file_name_ready <- sub("^od_", "", my_data$file_name_ready) # Remove "od_" prefix
+my_data$file_name_ready <- sub("\\.csv$", "", my_data$file_name_ready) # Remove ".csv" suffix
+my_data$file_name_ready <- sub("_[a-z]{2}_\\d{4}$", "", my_data$file_name_ready)
+
+# Capitalize the country codes
+my_data$country_code <- toupper(my_data$country_code)
+
+# Convert country_code to a factor with the appropriate levels
+# my_data$country_code <- factor(my_data$country_code, levels = unique(my_data$country_code))
+my_data$country_code <- factor(my_data$country_code, levels = c("CO", "ID", "IN", "MX"))
+
+# Arrange data by country_code and kept_trip in ascending order
+my_data <- my_data %>% arrange(country_code, kept_trip)
+
+# Set a number of 'empty bar' to add at the end of each group
+empty_bar <- 3
+
+# Add empty rows
+to_add <- data.frame(matrix(NA, empty_bar * nlevels(my_data$country_code), ncol(my_data)))
+colnames(to_add) <- colnames(my_data)
+to_add$country_code <- rep(levels(my_data$country_code), each=empty_bar)
+my_data <- rbind(my_data, to_add)
+
+# Assign the 'id' after arranging by country_code and kept_trip
+my_data <- my_data %>% arrange(country_code, kept_trip)
+my_data$id <- seq(1, nrow(my_data))
+
+# Get the name and the y position of each label
+label_data <- my_data
+number_of_bar <- nrow(label_data)
+angle <- 90 - 360 * (label_data$id - 0.5) / number_of_bar
+label_data$hjust <- ifelse(angle < -90, 1, 0)
+label_data$angle <- ifelse(angle < -90, angle + 180, angle)
+
+# Prepare a data frame for base lines
+base_data <- my_data %>%
+  group_by(country_code) %>%
+  summarize(start = min(id), end = max(id) - empty_bar) %>%
+  rowwise() %>%
+  mutate(title = mean(c(start, end)))
+
+# Prepare a data frame for grid (scales)
+grid_data <- base_data
+grid_data$end <- grid_data$end[c(nrow(grid_data), 1:nrow(grid_data) - 1)] + 1
+grid_data$start <- grid_data$start - 1
+grid_data <- grid_data[-1,]
+
+# Make the plot with custom colors
+p <- ggplot(my_data, aes(x = as.factor(id), y = kept_trip, fill = country_code)) +
+  geom_bar(aes(x = as.factor(id), y = kept_trip, fill = country_code), stat = "identity", alpha = 0.5) +
+  geom_segment(data = grid_data, aes(x = end, y = 0.8, xend = start, yend = 0.8), colour = "grey", alpha = 1, size = 0.3, inherit.aes = FALSE) +
+  geom_segment(data = grid_data, aes(x = end, y = 0.6, xend = start, yend = 0.6), colour = "grey", alpha = 1, size = 0.3, inherit.aes = FALSE) +
+  geom_segment(data = grid_data, aes(x = end, y = 0.4, xend = start, yend = 0.4), colour = "grey", alpha = 1, size = 0.3, inherit.aes = FALSE) +
+  geom_segment(data = grid_data, aes(x = end, y = 0.2, xend = start, yend = 0.2), colour = "grey", alpha = 1, size = 0.3, inherit.aes = FALSE) +
+  annotate("text", x = rep(max(my_data$id), 4), y = c(0.2, 0.4, 0.6, 0.8), label = c("0.2", "0.4", "0.6", "0.8"), color = "grey", size = 4, angle = 0, fontface = "bold", hjust = 1) +
+  ylim(-0.8, 1.2) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1, 4), "cm")
+  ) +
+  coord_polar() +
+  geom_text(data = label_data, aes(x = id, y = kept_trip + 0.05, label = file_name_ready, hjust = hjust), color = "black", fontface = "bold", alpha = 0.6, size = 3.5, angle = label_data$angle, inherit.aes = FALSE) +
+  geom_segment(data = base_data, aes(x = start, y = -0.05, xend = end, yend = -0.05), colour = "black", alpha = 0.8, size = 0.6, inherit.aes = FALSE) +
+  geom_text(data = base_data, aes(x = title, y = -0.15, label = country_code), hjust = c(1, 1, 0, 0), colour = "black", alpha = 0.8, size = 4, fontface = "bold", inherit.aes = FALSE) +
+   scale_fill_manual(values = col_pal_py_s)  # Apply the custom color palette
+#    scale_fill_manual(values = col_pal_rb_s)  # Apply the custom color palette
+
+ggsave(p, file="Netmob/kept_trip_2019_py.png")
+# ggsave(p, file="Netmob/kept_trip_2020_rb.png")
+p
+
+```
+
+# PD
+```{r}
+# Read and preprocess the new data
+my_data <- read.csv('/Users/wenlanzhang/Downloads/DIME/NetMob/Data/count/PD.csv')
+
+# Filter for the year 2019 (if needed)
+my_data <- my_data[my_data$year == 2019, ]
+
+# Remove ".csv" suffix from file names
+my_data$file_name <- sub("\\.csv$", "", my_data$file_name)
+
+# Capitalize the country codes
+my_data$country <- toupper(my_data$country)
+
+# Convert country_code to a factor with the appropriate levels
+my_data$country <- factor(my_data$country, levels = c("CO", "ID", "IN", "MX"))
+
+# Arrange data by country and ratio in ascending order
+my_data <- my_data %>% arrange(country, ratio)
+
+# Set a number of 'empty bar' to add at the end of each group
+empty_bar <- 3
+
+# Add empty rows
+to_add <- data.frame(matrix(NA, empty_bar * nlevels(my_data$country), ncol(my_data)))
+colnames(to_add) <- colnames(my_data)
+to_add$country <- rep(levels(my_data$country), each=empty_bar)
+my_data <- rbind(my_data, to_add)
+
+# Assign the 'id' after arranging by country and ratio
+my_data <- my_data %>% arrange(country, ratio)
+my_data$id <- seq(1, nrow(my_data))
+
+# Get the name and the y position of each label
+label_data <- my_data
+number_of_bar <- nrow(label_data)
+angle <- 90 - 360 * (label_data$id - 0.5) / number_of_bar
+label_data$hjust <- ifelse(angle < -90, 1, 0)
+label_data$angle <- ifelse(angle < -90, angle + 180, angle)
+
+# Prepare a data frame for base lines
+base_data <- my_data %>%
+  group_by(country) %>%
+  summarize(start = min(id), end = max(id) - empty_bar) %>%
+  rowwise() %>%
+  mutate(title = mean(c(start, end)))
+
+# Prepare a data frame for grid (scales)
+grid_data <- base_data
+grid_data$end <- grid_data$end[c(nrow(grid_data), 1:nrow(grid_data) - 1)] + 1
+grid_data$start <- grid_data$start - 1
+grid_data <- grid_data[-1,]
+
+# Make the plot with custom colors
+p <- ggplot(my_data, aes(x = as.factor(id), y = ratio, fill = country)) +
+  geom_bar(aes(x = as.factor(id), y = ratio, fill = country), stat = "identity", alpha = 0.5) +
+  geom_segment(data = grid_data, aes(x = end, y = 0.8, xend = start, yend = 0.8), colour = "grey", alpha = 1, size = 0.3, inherit.aes = FALSE) +
+  geom_segment(data = grid_data, aes(x = end, y = 0.6, xend = start, yend = 0.6), colour = "grey", alpha = 1, size = 0.3, inherit.aes = FALSE) +
+  geom_segment(data = grid_data, aes(x = end, y = 0.4, xend = start, yend = 0.4), colour = "grey", alpha = 1, size = 0.3, inherit.aes = FALSE) +
+  geom_segment(data = grid_data, aes(x = end, y = 0.2, xend = start, yend = 0.2), colour = "grey", alpha = 1, size = 0.3, inherit.aes = FALSE) +
+  annotate("text", x = rep(max(my_data$id), 4), y = c(0.2, 0.4, 0.6, 0.8), label = c("0.2", "0.4", "0.6", "0.8"), color = "grey", size = 4, angle = 0, fontface = "bold", hjust = 1) +
+  ylim(-0.8, 1.2) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1, 4), "cm")
+  ) +
+  coord_polar() +
+  geom_text(data = label_data, aes(x = id, y = ratio + 0.05, label = name_ready, hjust = hjust), color = "black", fontface = "bold", alpha = 0.6, size = 3.5, angle = label_data$angle, inherit.aes = FALSE) +
+  geom_segment(data = base_data, aes(x = start, y = -0.05, xend = end, yend = -0.05), colour = "black", alpha = 0.8, size = 0.6, inherit.aes = FALSE) +
+  geom_text(data = base_data, aes(x = title, y = -0.15, label = country), hjust = c(1, 1, 0, 0), colour = "black", alpha = 0.8, size = 4, fontface = "bold", inherit.aes = FALSE) +
+  scale_fill_manual(values = col_pal_py_s)  # Apply the custom color palette
+#    scale_fill_manual(values = col_pal_rb_s)  # Apply the custom color palette
+
+ggsave(p, file="Netmob/kept_point_2019_py_0911.png")
+# ggsave(p, file="Netmob/kept_point_2020_rb.png")
+p
+
+```
+
+
+
+
