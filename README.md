@@ -1,2 +1,61 @@
-This repo produced dataset for Netmob 2024 Data Challenge (https://netmob.org/). 
-The NetMob 2024 Data Challenge offered an opportunity for researchers from various academic fields to extract and utilize insights from mobility data. This dataset, developed in collaboration with Cuebiq and generated from data provided by Cuebiq specifically for this Challenge, comprised privacy-preserving, aggregated datasets derived from mobile application data collected from users who voluntarily consented to anonymous data collection for research purposes. Beyond academic progress, the goal of this year’s challenge was to foster a global environment where enthusiasm for analyzing mobile phone data thrives alongside practical development objectives. Specifically, it targeted four countries in the Global South (i.e., Colombia, Indonesia, India, and Mexico), aligning with the Sustainable Development Goals. Learn more at http://arxiv.org/abs/2410.00453.
+# NetMob 2024 Data Challenge – Data Processing & Visualization
+
+This repository contains the data processing and visualization workflows developed for the **[NetMob 2024 Data Challenge](https://netmob.org/www24/)**, organised by the **[DIME (World Bank)](https://www.worldbank.org/en/about/unit/unit-dec/impactevaluation)**.  
+The dataset is provided by **[Cuebiq](https://cuebiq.com/)** and accessed securely through the Spectus **Clean Data Room** using **SQL queries** executed within **Python Jupyter Notebooks**.
+
+The repository documents the entire workflow — from raw data extraction, aggregation, and transformation, to visualization and exploratory analysis.  
+> **Note:** All notebook cell outputs have been removed to maintain **data privacy**.
+
+---
+
+## 📄 Data Paper  
+For full details about the dataset and methodology, please refer to the official data paper:  
+[**[The NetMob2024 Dataset](https://arxiv.org/abs/2410.00453)**]
+
+---
+
+## 📂 Repository Structure
+
+```bash
+├── Code/
+│   ├── query_data_use/        # Main SQL + Python scripts for data access
+│   ├── data_viz/              # Visualization scripts and notebooks
+│
+├── README.md                  # Project overview
+```
+
+---
+
+## 🛠️ Data Access & Processing
+
+- **Data Source:** Spectus (Qubique) Mobility Data
+- **Access Method:** SQL queries via Spectus Clean Data Room
+- **Environment:** Python + Jupyter Notebooks
+
+**Key Features of Data Processing:**
+
+- Aggregation performed at multiple **spatial resolutions**:
+  - **H3 Level 7**
+  - **Geohash Level 3 & 5**
+- Temporal aggregation at different levels:
+  - **3-hourly**
+  - **Daily**
+  - **Weekly**
+  - **Monthly**
+- Locations covered:
+  - **Colombia**
+  - **India**
+  - **Indonesia**
+  - **Mexico**
+
+The main processing pipeline focuses on efficient querying, data cleaning, and summarizing mobility patterns for large-scale spatio-temporal analysis.
+
+> ⚠️ **Note**: Data access requires authorized credentials from Spectus Clean Data Room.
+Ensure you have the proper access rights before running the query notebooks.
+
+
+
+
+
+
+
